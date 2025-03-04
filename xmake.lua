@@ -1,4 +1,4 @@
-add_requires("entt", "vulkan-headers", "vulkansdk", "vulkan-hpp", "gtest", "glm >=1.0.1", "glfw >=3.4", "vcpkg::gl3w >=v2018-05-31#5")
+add_requires("entt", "vulkan-headers", "vulkansdk", "vulkan-hpp", "gtest", "glm >=1.0.1", "glfw >=3.4", "glew")
 
 set_project("ESGL")
 set_languages("c++20")
@@ -9,7 +9,7 @@ target("ESGL")
     set_kind("static")
     set_languages("cxx20")
     set_policy("build.warning", true)
-    add_packages("entt", "vulkansdk", "glm", "glfw", "vcpkg::gl3w")
+    add_packages("entt", "vulkansdk", "glew", "glm", "glfw")
 
     add_deps("EngineSquared")
 
@@ -44,7 +44,7 @@ for _, file in ipairs(os.files("tests/**.cpp")) do
         set_languages("cxx20")
         add_links("gtest")
         add_tests("default")
-        add_packages("entt", "vulkansdk", "glm", "glfw", "vcpkg::gl3w")
+        add_packages("entt", "vulkansdk", "glm", "glfw")
         
         add_deps("ESGL")
 

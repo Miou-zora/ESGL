@@ -22,8 +22,9 @@ version : 0.3 - 15 / 01 / 2014
 #include <sstream>
 #include <map>
 
-#include <GL/gl3w.h>
-#include <GL/gl.h>
+#include <windows.h>
+#include <GL/glew.h>
+#include <GLFW/glfw3.h>
 
 namespace ESGL {
 	class ShaderProgram

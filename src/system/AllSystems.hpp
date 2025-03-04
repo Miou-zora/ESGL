@@ -1,9 +1,9 @@
 #pragma once
 
 #include <iostream>
-#include "GL/gl3w.h"
-#include "GLFW/glfw3.h"
-#include "Core.hpp"
+#include <GL/glew.h>
+#include <GLFW/glfw3.h>
+#include "Core/Core.hpp"
 #include "Object.hpp"
 #include "Entity.hpp"
 #include "component/Transform.hpp"
@@ -78,20 +78,23 @@ namespace ESGL {
         glfwMakeContextCurrent(core.GetResource<ESGL::ESGLFWWINDOW>().window);
     }
 
-    void InitGL3W(ES::Engine::Core &core)
+    void InitGLEW(ES::Engine::Core &core)
     {
-        if (gl3wInit()) {
-            std::cerr << "Failed to initialize OpenGL" << std::endl;
-            return;
+        GLenum err = glewInit();
+        if (GLEW_OK != err) {
+            /* Problem: glewInit failed, something is seriously wrong. */
+            std::cerr << "Error: " << glewGetErrorString(err) << std::endl;
         }
+        std::cout << "Status: Using GLEW " << glewGetString(GLEW_VERSION) << std::endl;
     }
 
-    void CheckGL3WVersion(ES::Engine::Core &core)
+    void CheckGLEWVersion(ES::Engine::Core &core)
     {
-        if (!gl3wIsSupported(4, 2)) {
+        if (!glewIsSupported("GL_VERSION_4_2")) {
             std::cerr << "OpenGL 4.2 not supported" << std::endl;
             return;
         }
+        std::cout << "OpenGL 4.2 supported" << std::endl;
     }
 
     void GLFWEnableVSync(ES::Engine::Core &core)
