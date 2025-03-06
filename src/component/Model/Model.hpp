@@ -1,7 +1,6 @@
 #pragma once
 
-#include <Windows.h>
-#include <GL/GL.h>
+// #include <Windows.h>
 #include <glm/mat4x4.hpp>
 #include <glm/gtc/type_ptr.hpp>
 

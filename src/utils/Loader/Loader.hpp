@@ -22,7 +22,7 @@ version : 0.3 - 15 / 01 / 2014
 #include <sstream>
 #include <map>
 
-#include <windows.h>
+// #include <windows.h>
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 
@@ -31,7 +31,7 @@ namespace ESGL {
 	{
 	private:
 		// static DEBUG flag - if set to false then, errors aside, we'll run completely silent
-		static const bool DEBUG = true;
+		static constexpr bool DEBUG_SHADER = true;
 
 		// We'll use an enum to differentiate between shaders and shader programs when querying the info log
 		enum class ObjectType
@@ -40,12 +40,10 @@ namespace ESGL {
 		};
 
 		// Shader program and individual shader Ids
-		GLuint programId=0;
-		GLuint vertexShaderId=0;
-		GLuint fragmentShaderId=0;
-
-		// How many shaders are attached to the shader program
-		GLuint shaderCount;
+		GLuint programId = 0;
+		GLuint vertexShaderId = 0;
+		GLuint fragmentShaderId = 0;
+		bool initialised = false;
 
 		// Map of attributes and their binding locations
 		std::map<std::string, int> attributeMap;
@@ -54,7 +52,6 @@ namespace ESGL {
 		std::map<std::string, int> uniformMap;
 
 		// Has this shader program been initialised?
-		bool initialised;
 
 		// ---------- PRIVATE METHODS ----------
 
@@ -107,7 +104,7 @@ namespace ESGL {
 			}
 			else
 			{
-				if (DEBUG)
+				if (DEBUG_SHADER)
 				{
 					std::cout << shaderTypeString << " shader compilation successful." << std::endl;
 				}
@@ -144,7 +141,7 @@ namespace ESGL {
 			glGetProgramiv(programId, GL_LINK_STATUS, &programLinkSuccess);
 			if (programLinkSuccess == GL_TRUE)
 			{
-				if (DEBUG)
+				if (DEBUG_SHADER)
 				{
 					std::cout << "Shader program link successful." << std::endl;
 				}
@@ -162,7 +159,7 @@ namespace ESGL {
 			glGetProgramiv(programId, GL_VALIDATE_STATUS, &programValidatationStatus);
 			if (programValidatationStatus == GL_TRUE)
 			{
-				if (DEBUG)
+				if (DEBUG_SHADER)
 				{
 					std::cout << "Shader program validation successful." << std::endl;
 				}
@@ -233,32 +230,28 @@ namespace ESGL {
 			// Finally, return the string version of the info log
 			return infoLogString;
 		}
+		
+		public:
+		ShaderProgram() = default;
+		~ShaderProgram() = default;
 
-	public:
-		// Constructor
-		ShaderProgram()
+
+		void Create()
 		{
-			// We start in a non-initialised state - calling initFromFiles() or initFromStrings() will
-			// initialise us.
-			initialised = false;
-
-			// Generate a unique Id / handle for the shader program
-			// Note: We MUST have a valid rendering context before generating the programId or we'll segfault!
 			programId = glCreateProgram();
+			if (programId == 0) {
+				std::cout << "Failed to generate shader program Id." << std::endl;
+			}
 			glUseProgram(programId);
-
-			// Initially, we have zero shaders attached to the program
-			shaderCount = 0;
-			fragmentShaderId = 0;
-			vertexShaderId = 0;
 		}
 
-		// Destructor
-		~ShaderProgram()
+		void Destroy()
 		{
-			// Delete the shader program from the graphics card memory to
-			// free all the resources it's been using
-			glDeleteProgram(programId);
+			if (programId == 0) {
+				std::cout << "No shader program Id to delete." << std::endl;
+			} else {
+				glDeleteProgram(programId);
+			}
 		}
 
 		// Method to initialise a shader program from shaders provided as files
@@ -367,7 +360,7 @@ namespace ESGL {
 			}
 			else // Valid attribute location? Inform user if we're in debug mode.
 			{
-				if (DEBUG)
+				if (DEBUG_SHADER)
 				{
 					std::cout << "Attribute " << attributeName << " bound to location: " << attributeMap[attributeName] << std::endl;
 				}
@@ -391,7 +384,7 @@ namespace ESGL {
 			}
 			else // Valid uniform location? Inform user if we're in debug mode.
 			{
-				if (DEBUG)
+				if (DEBUG_SHADER)
 				{
 					std::cout << "Uniform " << uniformName << " bound to location: " << uniformMap[uniformName] << std::endl;
 				}

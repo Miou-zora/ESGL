@@ -1,8 +1,7 @@
 #pragma once
 
 // #include <GL/gl3w.h>
-#include <windows.h>
-#include <GL/GL.h>
+// #include <windows.h>
 #include <glm/vec3.hpp>
 
 namespace ESGL {

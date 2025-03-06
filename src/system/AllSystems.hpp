@@ -3,13 +3,16 @@
 #include <iostream>
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
-#include "Core/Core.hpp"
+#include "core/Core.hpp"
+#include "entt/entt.hpp"
 #include "Object.hpp"
 #include "Entity.hpp"
-#include "component/Transform.hpp"
 #include "ESGLFWWINDOW.hpp"
 #include "resource/Camera/Camera.hpp"
 #include "resource/Buttons/Buttons.hpp"
+#include "ShaderManager.hpp"
+#include "MaterialCache.hpp"
+#include "Model.hpp"
 
 namespace ESGL {
     const int DEFAULT_WIDTH = 800;
@@ -147,12 +150,13 @@ namespace ESGL {
     void LoadShaderManager(ES::Engine::Core &core)
     {
         ShaderManager &shaderManager = core.RegisterResource<ShaderManager>(ShaderManager());
-        ShaderProgram &program = shaderManager.add("default");
-        program.initFromFiles("shaders/simple.vert", "shaders/simple.frag");
+        ShaderProgram &sp = shaderManager.Add(entt::hashed_string{"default"}, std::move(ShaderProgram()));
+        sp.Create();
+        sp.initFromFiles("shaders/simple.vert", "shaders/simple.frag");
     }
 
     void SetupShaderUniforms(ES::Engine::Core &core) {
-        auto &m_shaderProgram = core.GetResource<ShaderManager>().get("default");
+        auto &m_shaderProgram = core.GetResource<ShaderManager>().Get(entt::hashed_string{"default"});
 
         // Add uniforms
         m_shaderProgram.addUniform("MVP");
@@ -174,7 +178,7 @@ namespace ESGL {
     void LoadMaterialCache(ES::Engine::Core &core)
     {
         auto &materialCache = core.RegisterResource<MaterialCache>({});
-        materialCache.add("default");
+        materialCache.Add(entt::hashed_string("default"), std::move(Material()));
     }
 
     void CreateCamera(ES::Engine::Core &core)
@@ -217,7 +221,7 @@ namespace ESGL {
 
     void SetupLights(ES::Engine::Core &core)
     {
-        core.GetResource<ShaderManager>().use("default");
+        auto &shader = core.GetResource<ShaderManager>().Get(entt::hashed_string{"default"});
 
         Light light[] = {
             {glm::vec4(0, 0, 0, 1), glm::vec3(0.0f, 0.8f, 0.8f)},
@@ -226,27 +230,28 @@ namespace ESGL {
             {glm::vec4(0, 0, 0, 1), glm::vec3(0.0f, 0.8f, 0.0f)},
             {glm::vec4(0, 0, 0, 1), glm::vec3(0.8f, 0.8f, 0.8f)}
         };
-
+        
         float nbr_lights = 5.f;
         float scale = 2.f * glm::pi<float>() / nbr_lights;
-
+        
         light[0].Position = glm::vec4( 5.f * cosf(scale * 0.f), 5.f, 5.f * sinf(scale * 0.f), 1.f);
         light[1].Position = glm::vec4( 5.f * cosf(scale * 1.f), 5.f, 5.f * sinf(scale * 1.f), 1.f);
         light[2].Position = glm::vec4( 5.f * cosf(scale * 2.f), 5.f, 5.f * sinf(scale * 2.f), 1.f);
         light[3].Position = glm::vec4( 5.f * cosf(scale * 3.f), 5.f, 5.f * sinf(scale * 3.f), 1.f);
         light[4].Position = glm::vec4( 5.f * cosf(scale * 4.f), 5.f, 5.f * sinf(scale * 4.f), 1.f);
         
-        auto &shaderProgram = core.GetResource<ShaderManager>().get("default");
+        
+        shader.use();
         for (int i = 0; i < 5; i++) {
-            glUniform4fv(shaderProgram.uniform("Light[" + std::to_string(i) + "].Position"), 1, glm::value_ptr(light[i].Position));
-            glUniform3fv(shaderProgram.uniform("Light[" + std::to_string(i) + "].Intensity"), 1, glm::value_ptr(light[i].Intensity));
-        }        
-        core.GetResource<ShaderManager>().disable("default");
+            glUniform4fv(shader.uniform("Light[" + std::to_string(i) + "].Position"), 1, glm::value_ptr(light[i].Position));
+            glUniform3fv(shader.uniform("Light[" + std::to_string(i) + "].Intensity"), 1, glm::value_ptr(light[i].Intensity));
+        }
+        shader.disable();
     }
 
     void SetupCamera(ES::Engine::Core &core)
     {
-        auto &shaderProgram = core.GetResource<ShaderManager>().get("default");
+        auto &shaderProgram = core.GetResource<ShaderManager>().Get(entt::hashed_string{"default"});
         shaderProgram.use();
         glUniform3fv(shaderProgram.uniform("CamPos"), 1, glm::value_ptr(core.GetResource<Camera>().viewer.getViewPoint()));
         shaderProgram.disable();
@@ -257,8 +262,8 @@ namespace ESGL {
         auto &view = core.GetResource<Camera>().view;
         auto &projection = core.GetResource<Camera>().projection;
         core.GetRegistry().view<Model, ES::Plugin::Object::Component::Transform>().each([&](auto entity, Model &model, ES::Plugin::Object::Component::Transform &transform) {
-            auto &shader = core.GetResource<ShaderManager>().get(model.shaderName);
-            const auto material = core.GetResource<MaterialCache>().get(model.materialName);
+            auto &shader = core.GetResource<ShaderManager>().Get(entt::hashed_string{model.shaderName.c_str()});
+            const auto material = core.GetResource<MaterialCache>().Get(entt::hashed_string{model.materialName.c_str()});
             shader.use();
             glUniform3fv(shader.uniform("Material.Ka"), 1, glm::value_ptr(material.Ka));
             glUniform3fv(shader.uniform("Material.Kd"), 1, glm::value_ptr(material.Kd));
